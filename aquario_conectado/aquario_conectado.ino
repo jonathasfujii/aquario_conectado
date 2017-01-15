@@ -1,7 +1,9 @@
 /*
  * Jonathas Eide Fujii
  * jonathasfujii@gmail.com
- * 31/12/2016
+ * 01/01/2017
+ * 
+ * Arduino IDE v1.8.0
  */
 
 #include <ESP8266WiFi.h>
@@ -10,12 +12,16 @@
 #include <ArduinoOTA.h>
 #include <ArduinoJson.h> // https://github.com/bblanchon/ArduinoJson
 #include <PubSubClient.h> // http://pubsubclient.knolleary.net/
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 
 //// WIFI ////
 const char* ssid = "";
 const char* password = "";
 const char* senha_ota = "";
 
+const byte pinLedEsp = 2;
 
 const byte pinRelay1 = 14;
 const byte pinRelay2 = 16;
@@ -39,6 +45,7 @@ const byte pinBlue = 3;
 // Topics
 const char* light_state_topic = "casa/aquario/rgb";
 const char* light_set_topic = "casa/aquario/rgb/set";
+const char* temperatura_set_topic = "casa/aquario/temperatura/set";
 
 const char* on_cmd = "ON";
 const char* off_cmd = "OFF";
@@ -79,6 +86,13 @@ byte flashBrightness = brightness;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+//// Temperatura ////
+OneWire oneWire(pinTemp); // Setup a oneWire instance to communicate with any OneWire devices 
+DallasTemperature sensors(&oneWire);
+long lastMsg = 0;
+float temp = 0;
+//int inPin = 5;
 
 
 

@@ -40,15 +40,23 @@ void setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
   
+  
   pinMode(pinRed, OUTPUT);
   pinMode(pinGreen, OUTPUT);
   pinMode(pinBlue, OUTPUT);
+
+  pinMode(pinLedEsp, OUTPUT);
+  digitalWrite(pinLedEsp, LOW);
   //// RGB ////
   analogWriteRange(255);
   
   //// MQTT ////
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+
+  //// Temperatura ////
+  pinMode(pinTemp, INPUT);
+  sensors.begin();
 }
 
 void loop() {
@@ -59,6 +67,7 @@ void loop() {
     reconnect();
   }
   client.loop();
+  temperatura();
   
   //// RGB ////
   if (flash) {
