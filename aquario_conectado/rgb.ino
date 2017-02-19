@@ -17,39 +17,77 @@
       "state": "ON"
     }
   */
-void callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
 
-  char message[length + 1];
-  for (int i = 0; i < length; i++) {
-    message[i] = (char)payload[i];
-  }
-  message[length] = '\0';
-  Serial.println(message);
+void rgb_loop(){
+  //// RGB ////
+  if (flash) {
+    if (startFlash) {
+      startFlash = false;
+      flashStartTime = millis();
+    }
 
-  if (!processJson(message)) {
-    return;
-  }
-
-  if (stateOn) {
-    // Update lights
-    realRed = map(red, 0, 255, 0, brightness);
-    realGreen = map(green, 0, 255, 0, brightness);
-    realBlue = map(blue, 0, 255, 0, brightness);
-  }
-  else {
-    realRed = 0;
-    realGreen = 0;
-    realBlue = 0;
+    if ((millis() - flashStartTime) <= flashLength) {
+      if ((millis() - flashStartTime) % 1000 <= 500) {
+        setColor(flashRed, flashGreen, flashBlue);
+      }
+      else {
+        setColor(0, 0, 0);
+        // If you'd prefer the flashing to happen "on top of"
+        // the current color, uncomment the next line.
+        // setColor(realRed, realGreen, realBlue);
+      }
+    }
+    else {
+      flash = false;
+      setColor(realRed, realGreen, realBlue);
+    }
   }
 
-  startFade = true;
-  inFade = false; // Kill the current fade
+  if (startFade) {
+    // If we don't want to fade, skip it.
+    if (transitionTime == 0) {
+      setColor(realRed, realGreen, realBlue);
 
-  sendState();
+      redVal = realRed;
+      grnVal = realGreen;
+      bluVal = realBlue;
+
+      startFade = false;
+    }
+    else {
+      loopCount = 0;
+      stepR = calculateStep(redVal, realRed);
+      stepG = calculateStep(grnVal, realGreen);
+      stepB = calculateStep(bluVal, realBlue);
+
+      inFade = true;
+    }
+  }
+
+  if (inFade) {
+    startFade = false;
+    unsigned long now = millis();
+    if (now - lastLoop > transitionTime) {
+      if (loopCount <= 1020) {
+        lastLoop = now;
+        
+        redVal = calculateVal(stepR, redVal, loopCount);
+        grnVal = calculateVal(stepG, grnVal, loopCount);
+        bluVal = calculateVal(stepB, bluVal, loopCount);
+        
+        setColor(redVal, grnVal, bluVal); // Write current values to LED pins
+
+        Serial.print("Loop count: ");
+        Serial.println(loopCount);
+        loopCount++;
+      }
+      else {
+        inFade = false;
+      }
+    }
+  }
 }
+
 
 bool processJson(char* message) {
   StaticJsonBuffer<BUFFER_SIZE> jsonBuffer;
@@ -116,7 +154,7 @@ bool processJson(char* message) {
       transitionTime = root["transition"];
     }
     else {
-      transitionTime = 0;
+      transitionTime = 1; // original é 0, mas com 1 sempre terá fader, alterado por Jonathas
     }
   }
 
@@ -142,23 +180,6 @@ void sendState() {
   client.publish(light_state_topic, buffer, true);
 }
 
-void reconnect() {
-  // Loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
-    if (client.connect(client_id, mqtt_username, mqtt_password)) {
-      Serial.println("connected");
-      client.subscribe(light_set_topic);
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
-      delay(5000);
-    }
-  }
-}
 
 void setColor(int inR, int inG, int inB) {
   analogWrite(pinRed, inR);

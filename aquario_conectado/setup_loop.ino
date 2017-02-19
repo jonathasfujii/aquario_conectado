@@ -40,100 +40,42 @@ void setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
   
+  pinMode(pinLedEsp, OUTPUT);
+  digitalWrite(pinLedEsp, LOW);
+
+  //// Sensor Temperatura ////
+  pinMode(pinTemp, INPUT);
+  sensors.begin();
+
+    //// Temperatura ////
+  pinMode(pinPir, INPUT);
   
+  //// RGB ////
   pinMode(pinRed, OUTPUT);
   pinMode(pinGreen, OUTPUT);
   pinMode(pinBlue, OUTPUT);
-
-  pinMode(pinLedEsp, OUTPUT);
-  digitalWrite(pinLedEsp, LOW);
-  //// RGB ////
   analogWriteRange(255);
+
+  //// Atuadores Relay ////
+  pinMode(pinAquecedor, OUTPUT);
+  digitalWrite(pinAquecedor, LOW);
+  pinMode(pinBombaAr, OUTPUT);
+  digitalWrite(pinBombaAr, LOW);
+  pinMode(pinRacao, OUTPUT);
   
   //// MQTT ////
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
-  //// Temperatura ////
-  pinMode(pinTemp, INPUT);
-  sensors.begin();
+
 }
 
 void loop() {
   ArduinoOTA.handle();
-
-  //// MQTT ////
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
-  temperatura();
-  
-  //// RGB ////
-  if (flash) {
-    if (startFlash) {
-      startFlash = false;
-      flashStartTime = millis();
-    }
-
-    if ((millis() - flashStartTime) <= flashLength) {
-      if ((millis() - flashStartTime) % 1000 <= 500) {
-        setColor(flashRed, flashGreen, flashBlue);
-      }
-      else {
-        setColor(0, 0, 0);
-        // If you'd prefer the flashing to happen "on top of"
-        // the current color, uncomment the next line.
-        // setColor(realRed, realGreen, realBlue);
-      }
-    }
-    else {
-      flash = false;
-      setColor(realRed, realGreen, realBlue);
-    }
-  }
-
-  if (startFade) {
-    // If we don't want to fade, skip it.
-    if (transitionTime == 0) {
-      setColor(realRed, realGreen, realBlue);
-
-      redVal = realRed;
-      grnVal = realGreen;
-      bluVal = realBlue;
-
-      startFade = false;
-    }
-    else {
-      loopCount = 0;
-      stepR = calculateStep(redVal, realRed);
-      stepG = calculateStep(grnVal, realGreen);
-      stepB = calculateStep(bluVal, realBlue);
-
-      inFade = true;
-    }
-  }
-
-  if (inFade) {
-    startFade = false;
-    unsigned long now = millis();
-    if (now - lastLoop > transitionTime) {
-      if (loopCount <= 1020) {
-        lastLoop = now;
-        
-        redVal = calculateVal(stepR, redVal, loopCount);
-        grnVal = calculateVal(stepG, grnVal, loopCount);
-        bluVal = calculateVal(stepB, bluVal, loopCount);
-        
-        setColor(redVal, grnVal, bluVal); // Write current values to LED pins
-
-        Serial.print("Loop count: ");
-        Serial.println(loopCount);
-        loopCount++;
-      }
-      else {
-        inFade = false;
-      }
-    }
-  }
+  mqtt_loop();
+  pir_loop();
+  rgb_loop();
+  temperatura_loop();
+  desligaRacao();
+  desligaAquecedor();
 }
