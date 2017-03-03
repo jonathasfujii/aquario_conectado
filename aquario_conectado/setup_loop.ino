@@ -48,7 +48,7 @@ void setup() {
   sensors.begin();
 
     //// Temperatura ////
-  pinMode(pinPir, INPUT);
+  pinMode(pinPir, INPUT_PULLUP);
   
   //// RGB ////
   pinMode(pinRed, OUTPUT);
@@ -62,6 +62,7 @@ void setup() {
   pinMode(pinBombaAr, OUTPUT);
   digitalWrite(pinBombaAr, LOW);
   pinMode(pinRacao, OUTPUT);
+  digitalWrite(pinRacao, LOW);
   
   //// MQTT ////
   client.setServer(mqtt_server, 1883);

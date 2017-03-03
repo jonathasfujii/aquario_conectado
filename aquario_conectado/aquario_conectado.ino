@@ -51,7 +51,6 @@ OneWire oneWire(pinTemp); // Setup a oneWire instance to communicate with any On
 DallasTemperature sensors(&oneWire);
 long lastTimeTemp = 0;
 float temp = 0;
-long sleepTemp = 60000; // 1 minuto
 
 //// Sensor PIR ////
 const byte pinPir = 13;
@@ -96,6 +95,5 @@ const byte pinAquecedor = 14;
 const byte pinBombaAr = 16;
 const byte pinRacao = 15;
 long lastTimeRacao = 0;
-int bounceTimeRacao = 500;
 
 

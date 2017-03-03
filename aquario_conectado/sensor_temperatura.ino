@@ -1,7 +1,7 @@
 void temperatura_loop(){
   long now = millis();
   
-  if (now - lastTimeTemp > sleepTemp) {
+  if (now - lastTimeTemp > 120000) {
     lastTimeTemp = now;
     sensors.setResolution(12);
     sensors.requestTemperatures(); // Send the command to get temperatures

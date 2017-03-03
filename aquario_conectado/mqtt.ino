@@ -35,7 +35,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //Serial.print(topic);
   
   if(strcmp(topic,light_set_topic)==0) {//// RGB ////  
-    digitalWrite(pinLedEsp, HIGH);  
     char message[length + 1];
     for (int i = 0; i < length; i++) {
       message[i] = (char)payload[i];
@@ -58,21 +57,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
     startFade = true;
     inFade = false; // Kill the current fade  
     sendState(); 
-    digitalWrite(pinLedEsp, LOW);  
   } else if (strcmp(topic,aquecedor_set_topic)==0){//// Aquecedor ////
-      digitalWrite(pinLedEsp, HIGH);  
       char msg[length];
       snprintf(msg, length+1, "%s", payload);
       if (strcmp(msg,on_cmd)==0) { 
         digitalWrite(pinAquecedor, HIGH);   
         client.publish(aquecedor_state_topic, on_cmd);
+        lastTimeTemp = millis();
       } else {
         digitalWrite(pinAquecedor, LOW);   
         client.publish(aquecedor_state_topic, off_cmd);
       }
-      digitalWrite(pinLedEsp, LOW);    
   } else if(strcmp(topic,bomba_ar_set_topic)==0){ //// Bomba Ar ////
-      digitalWrite(pinLedEsp, HIGH);  
       char msg[length];
       snprintf(msg, length+1, "%s", payload);
       if (strcmp(msg,on_cmd)==0) { 
@@ -82,17 +78,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
         digitalWrite(pinBombaAr, LOW);   
         client.publish(bomba_ar_state_topic, off_cmd);
       }      
-      digitalWrite(pinLedEsp, LOW);  
   } else if(strcmp(topic,racao_set_topic)==0){//// Racao ////
-      digitalWrite(pinLedEsp, HIGH);  
       char msg[length];
       snprintf(msg, length+1, "%s", payload);
       if (strcmp(msg,on_cmd)==0) {
         digitalWrite(pinRacao, HIGH);  
-        lastTimeRacao = millis(); 
         client.publish(racao_state_topic, on_cmd);
-      } 
-      digitalWrite(pinLedEsp, LOW);  
+        lastTimeRacao = millis(); 
+      } else {
+        digitalWrite(pinRacao, LOW);   
+        client.publish(racao_state_topic, off_cmd);
+      }
+
   }
 }
 

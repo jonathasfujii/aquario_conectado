@@ -2,7 +2,9 @@ void pir_loop(){
   int pirState = digitalRead(pinPir);  
   
   if (pirState != pirOldState){
-    client.publish(pir_state_topic, pirState==HIGH?on_cmd:off_cmd,TRUE);
+    if(pirState == HIGH){
+      client.publish(pir_state_topic, on_cmd,TRUE);
+    }
     pirOldState = pirState;
   }
 }
